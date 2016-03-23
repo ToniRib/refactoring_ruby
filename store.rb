@@ -15,8 +15,6 @@
 
 require "pry"
 
-
-
 class BookOrder
   attr_reader :quantity, :status, :order_number
 
@@ -96,7 +94,11 @@ class ConferenceTicketOrder
   end
 
   def to_s
-    report = OrderReport.new(@address, quantity, total, order_number, "conference ticket")
+    report = OrderReport.new(@address,
+                             quantity,
+                             total,
+                             order_number,
+                             "conference ticket")
 
     report.generate_as(:string)
   end
@@ -137,29 +139,39 @@ class Payment
 
   def process(total)
     case type
-    when :cash || :cheque
-      send_email_receipt
-      update_status_to_charged
-    when :paypal
-      if charge_paypal_account(total)
-        send_email_receipt
-        update_status_to_charged
-      else
-        send_payment_failure_email
-        update_status_to_failed
-      end
-    when :stripe
-      if charge_paypal_account(total)
-        send_email_receipt
-        update_status_to_charged
-      else
-        send_payment_failure_email
-        update_status_to_failed
-      end
+    when :cash, :cheque
+      send_email_receipt_and_update_status_to_charged
+    when :paypal, :stripe
+      attempt_to_charge_account(total)
     end
   end
 
   private
+
+  def attempt_to_charge_account(total)
+    if charge_account(total)
+      send_email_receipt_and_update_status_to_charged
+    else
+      send_failure_email_and_update_status_to_failed
+    end
+  end
+
+  def send_email_receipt_and_update_status_to_charged
+    send_email_receipt
+    update_status_to_charged
+  end
+
+  def send_failure_email_and_update_status_to_failed
+    send_payment_failure_email
+    update_status_to_failed
+  end
+
+  def charge_account(total)
+    case type
+    when :paypal then charge_paypal_account(total)
+    when :stripe then charge_credit_card(total)
+    end
+  end
 
   def update_status_to_charged
     @status = "charged"
