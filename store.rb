@@ -16,6 +16,8 @@
 require "pry"
 
 class BookOrder
+  attr_reader :quantity, :status, :order_number
+
   def initialize(order_number, quantity, address)
     @order_number = order_number
     @quantity = quantity
@@ -23,35 +25,10 @@ class BookOrder
   end
 
   def charge(order_type, payment_type)
-    if order_type == "ebook"
-      shipping = 0
-    else
-      shipping = 5.99
-    end
+    payment = Payment.new(payment_type)
+    payment.process(total(order_type))
 
-    if payment_type == :cash
-      send_email_receipt
-      @status = "charged"
-    elsif payment_type == :cheque
-      send_email_receipt
-      @status = "charged"
-    elsif payment_type == :paypal
-      if charge_paypal_account(shipping + (quantity * 14.95))
-        send_email_receipt
-        @status = "charged"
-      else
-        send_payment_failure_email
-        @status = "failed"
-      end
-    elsif payment_type == :stripe
-      if charge_credit_card(shipping + (quantity * 14.95))
-        send_email_receipt
-        @status = "charged"
-      else
-        send_payment_failure_email
-        @status = "failed"
-      end
-    end
+    @status = payment.status
   end
 
   def ship(order_type)
@@ -64,29 +41,10 @@ class BookOrder
     @status = "shipped"
   end
 
-  def quantity
-    @quantity
-  end
-
-  def status
-    @status
-  end
-
   def to_s(order_type)
-    if order_type == "ebook"
-      shipping = 0
-    else
-      shipping = 4.99
-    end
+    report = OrderReport.new(@address, quantity, total(order_type), order_number, order_type)
 
-    report = "Order ##{@order_number}\n"
-    report += "Ship to: #{@address.join(", ")}\n"
-    report += "-----\n\n"
-    report += "Qty   | Item Name                       | Total\n"
-    report += "------|---------------------------------|------\n"
-    report += "#{@quantity}     | Book                            | $#{shipping + (quantity * 14.95)}"
-    report
-    return report
+    report.generate_as(:string)
   end
 
   def shipping_cost(order_type)
@@ -97,18 +55,8 @@ class BookOrder
     end
   end
 
-  def send_email_receipt
-    # [send email receipt]
-  end
-
-  # In real life, charges would happen here. For sake of this test, it simply returns true
-  def charge_paypal_account(amount)
-    true
-  end
-
-  # In real life, charges would happen here. For sake of this test, it simply returns true
-  def charge_credit_card(amount)
-    true
+  def total(order_type)
+    shipping_cost(order_type) + (quantity * 14.95)
   end
 end
 
@@ -124,9 +72,10 @@ class ConferenceTicketOrder
   end
 
   def charge(payment_type)
-    Payment.new(payment_type).process(total)
+    payment = Payment.new(payment_type)
+    payment.process(total)
 
-    update_status_to_charged
+    @status = payment.status
   end
 
   def ship
@@ -136,10 +85,10 @@ class ConferenceTicketOrder
     update_status_to_shipped
   end
 
-  def to_s(report_format)
-    report = OrderReport.new(@address, quantity, total, order_number)
+  def to_s
+    report = OrderReport.new(@address, quantity, total, order_number, "conference ticket")
 
-    return report.generate_as(report_format)
+    report.generate_as(:string)
   end
 
   def shipping_cost
@@ -147,10 +96,6 @@ class ConferenceTicketOrder
   end
 
   private
-
-  def update_status_to_charged
-    @status = "charged"
-  end
 
   def update_status_to_shipped
     @status = "shipped"
@@ -174,7 +119,7 @@ class ConferenceTicketOrder
 end
 
 class Payment
-  attr_reader :type
+  attr_reader :type, :status
 
   def initialize(type)
     @type = type
@@ -183,16 +128,36 @@ class Payment
   def process(total)
     case type
     when :cash || :cheque
+      send_email_receipt
+      update_status_to_charged
     when :paypal
-      charge_paypal_account total
+      if charge_paypal_account(total)
+        send_email_receipt
+        update_status_to_charged
+      else
+        send_payment_failure_email
+        update_status_to_failed
+      end
     when :stripe
-      charge_credit_card total
+      if charge_paypal_account(total)
+        send_email_receipt
+        update_status_to_charged
+      else
+        send_payment_failure_email
+        update_status_to_failed
+      end
     end
-
-    send_email_receipt
   end
 
   private
+
+  def update_status_to_charged
+    @status = "charged"
+  end
+
+  def update_status_to_failed
+    @status = "failed"
+  end
 
   # In real life, charges would happen here. For sake of this test, it simply returns true
   def charge_paypal_account(amount)
@@ -208,16 +173,22 @@ class Payment
     # [send email receipt] Toni - I assume this would do something in real life
     true
   end
+
+  def send_payment_failure_email
+    # [send failure email receipt]
+    true
+  end
 end
 
 class OrderReport
-  attr_reader :address, :quantity, :total, :order_number
+  attr_reader :address, :quantity, :total, :order_number, :order_type
 
-  def initialize(address, quantity, total, order_number)
+  def initialize(address, quantity, total, order_number, order_type)
     @address = address
     @quantity = quantity
     @total = total
     @order_number = order_number
+    @order_type = order_type
   end
 
   def generate_as(format)
@@ -236,8 +207,24 @@ class OrderReport
     "Qty   | Item Name                       | Total\n" \
     "------|---------------------------------|------\n" \
     "#{quantity}     |" \
-    " Conference Ticket               |" \
+    " #{printable_order_type}               |" \
     " $#{total_with_two_decimals}"
+  end
+
+  def printable_order_type
+    pad_to_fit(order_type_conversion[order_type])
+  end
+
+  def order_type_conversion
+    {
+      "print" => "Book",
+      "conference ticket" => "Conference Ticket",
+      "ebook" => "eBook"
+    }
+  end
+
+  def pad_to_fit(text)
+    text.ljust(17, " ")
   end
 
   def mailing_address

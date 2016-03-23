@@ -53,7 +53,7 @@ describe BookOrder do
              "-----\n\n" \
              "Qty   | Item Name                       | Total\n" \
              "------|---------------------------------|------\n" \
-             "5     | Book                            | $79.74"
+             "5     | Book                            | $79.70"
 
     expect(order.to_s("print")).to eq(report)
   end
@@ -94,7 +94,7 @@ describe ConferenceTicketOrder do
                "------|---------------------------------|------\n" \
                "1     | Conference Ticket               | $300.00"
 
-      expect(order.to_s(:string)).to eq(report)
+      expect(order.to_s).to eq(report)
     end
   end
 
@@ -114,15 +114,15 @@ describe Payment do
     it "processes a payment" do
       process_response = subject.process(300)
 
-      expect(process_response).to be true
+      expect(process_response).to eq("charged")
     end
   end
 end
 
 describe OrderReport do
-  context "a valid order" do
+  context "a valid conference ticket order" do
     subject do
-      OrderReport.new(["456 Test St.", "New York, NY 12345"], 1, 300, 12345)
+      OrderReport.new(["456 Test St.", "New York, NY 12345"], 1, 300, 12345, "conference ticket")
     end
 
     it "generates a text-based report" do
