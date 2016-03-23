@@ -121,7 +121,7 @@ class ConferenceTicketOrder
   def charge(payment_type)
     Payment.new(payment_type).process(total)
 
-    send_email_receipt_and_update_status_to_charged
+    update_status_to_charged
   end
 
   def ship
@@ -148,14 +148,9 @@ class ConferenceTicketOrder
     0
   end
 
-  def send_email_receipt
-    # [send email receipt]
-  end
-
   private
 
-  def send_email_receipt_and_update_status_to_charged
-    send_email_receipt
+  def update_status_to_charged
     @status = "charged"
   end
 
@@ -195,7 +190,11 @@ class Payment
     when :stripe
       charge_credit_card total
     end
+
+    send_email_receipt
   end
+
+  private
 
   # In real life, charges would happen here. For sake of this test, it simply returns true
   def charge_paypal_account(amount)
@@ -204,6 +203,11 @@ class Payment
 
   # In real life, charges would happen here. For sake of this test, it simply returns true
   def charge_credit_card(amount)
+    true
+  end
+
+  def send_email_receipt
+    # [send email receipt] Toni - I assume this would do something in real life
     true
   end
 end
