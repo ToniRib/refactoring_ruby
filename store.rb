@@ -15,6 +15,8 @@
 
 require "pry"
 
+
+
 class BookOrder
   attr_reader :quantity, :status, :order_number
 
@@ -25,8 +27,10 @@ class BookOrder
   end
 
   def charge(order_type, payment_type)
+    @order_type = order_type
+
     payment = Payment.new(payment_type)
-    payment.process(total(order_type))
+    payment.process(total)
 
     @status = payment.status
   end
@@ -38,25 +42,31 @@ class BookOrder
       # [print shipping label]
     end
 
-    @status = "shipped"
+    update_status_to_shipped
   end
 
   def to_s(order_type)
-    report = OrderReport.new(@address, quantity, total(order_type), order_number, order_type)
+    report = OrderReport.new(@address, quantity, total, order_number, order_type)
 
     report.generate_as(:string)
   end
 
   def shipping_cost(order_type)
-    if order_type == "ebook"
-      shipping = 0
-    else
-      shipping = 4.95
-    end
+    order_type == "ebook" ? 0 : 4.95
   end
 
-  def total(order_type)
-    shipping_cost(order_type) + (quantity * 14.95)
+  private
+
+  def update_status_to_shipped
+    @status = "shipped"
+  end
+
+  def price_of_book
+    14.95
+  end
+
+  def total
+    shipping_cost(@order_type) + (quantity * price_of_book)
   end
 end
 
