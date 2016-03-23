@@ -144,7 +144,6 @@ class ConferenceTicketOrder
   end
 
   def to_s
-    shipping = 0
     report = "Order ##{@order_number}\n"
     report += "Ship to: #{@address.join(", ")}\n"
     report += "-----\n\n"
@@ -152,13 +151,13 @@ class ConferenceTicketOrder
     report += "------|---------------------------------|------\n"
     report += "#{@quantity}     |"
     report += " Conference Ticket               |"
-    report += " $#{total_with_two_decimals(shipping)}"
+    report += " $#{total_with_two_decimals}"
     report
     return report
   end
 
   def shipping_cost
-    shipping = 0
+    0
   end
 
   def send_email_receipt
@@ -177,6 +176,10 @@ class ConferenceTicketOrder
 
   private
 
+  def price_of_ticket
+    300.0
+  end
+
   def quantity_error_message
     "Conference tickets are limited to one per customer"
   end
@@ -185,7 +188,11 @@ class ConferenceTicketOrder
     quantity != 1
   end
 
-  def total_with_two_decimals(shipping)
-    '%.2f' % (shipping + (quantity * 300.0))
+  def total_with_two_decimals
+    "%.2f" % total
+  end
+
+  def total
+    shipping_cost + (quantity * price_of_ticket)
   end
 end
