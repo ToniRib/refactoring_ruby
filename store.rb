@@ -8,6 +8,8 @@
 # planning to introduce a lot of new products into the store very soon, such as
 # software and training seminars.
 
+require "pry"
+
 class BookOrder
   def initialize(order_number, quantity, address)
     @order_number = order_number
@@ -117,23 +119,9 @@ class ConferenceTicketOrder
   end
 
   def charge(payment_type)
-    shipping = 0
+    Payment.new(payment_type).process(total)
 
-    if payment_type == :cash
-      send_email_receipt
-      @status = "charged"
-    elsif payment_type == :cheque
-      send_email_receipt
-      @status = "charged"
-    elsif payment_type == :paypal
-      charge_paypal_account shipping + (quantity * 300)
-      send_email_receipt
-      @status = "charged"
-    elsif payment_type == :stripe
-      charge_credit_card shipping + (quantity * 300)
-      send_email_receipt
-      @status = "charged"
-    end
+    send_email_receipt_and_update_status_to_charged
   end
 
   def ship
@@ -164,17 +152,12 @@ class ConferenceTicketOrder
     # [send email receipt]
   end
 
-  # In real life, charges would happen here. For sake of this test, it simply returns true
-  def charge_paypal_account(amount)
-    true
-  end
-
-  # In real life, charges would happen here. For sake of this test, it simply returns true
-  def charge_credit_card(amount)
-    true
-  end
-
   private
+
+  def send_email_receipt_and_update_status_to_charged
+    send_email_receipt
+    @status = "charged"
+  end
 
   def price_of_ticket
     300.0
@@ -194,5 +177,33 @@ class ConferenceTicketOrder
 
   def total
     shipping_cost + (quantity * price_of_ticket)
+  end
+end
+
+class Payment
+  attr_reader :type
+
+  def initialize(type)
+    @type = type
+  end
+
+  def process(total)
+    case type
+    when :cash || :cheque
+    when :paypal
+      charge_paypal_account total
+    when :stripe
+      charge_credit_card total
+    end
+  end
+
+  # In real life, charges would happen here. For sake of this test, it simply returns true
+  def charge_paypal_account(amount)
+    true
+  end
+
+  # In real life, charges would happen here. For sake of this test, it simply returns true
+  def charge_credit_card(amount)
+    true
   end
 end

@@ -104,3 +104,17 @@ describe ConferenceTicketOrder do
     end.to raise_error("Conference tickets are limited to one per customer")
   end
 end
+
+describe Payment do
+  context "a valid payment type" do
+    subject do
+      Payment.new(:paypal)
+    end
+
+    it "processes a payment" do
+      process_response = subject.process(300)
+
+      expect(process_response).to be true
+    end
+  end
+end
