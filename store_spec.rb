@@ -118,3 +118,22 @@ describe Payment do
     end
   end
 end
+
+describe OrderReport do
+  context "a valid order" do
+    subject do
+      OrderReport.new(["456 Test St.", "New York, NY 12345"], 1, 300, 12345)
+    end
+
+    it "generates a text-based report" do
+      report = "Order #12345\n" \
+               "Ship to: 456 Test St., New York, NY 12345\n" \
+               "-----\n\n" \
+               "Qty   | Item Name                       | Total\n" \
+               "------|---------------------------------|------\n" \
+               "1     | Conference Ticket               | $300.00"
+
+      expect(subject.generate_as(:string)).to eq(report)
+    end
+  end
+end

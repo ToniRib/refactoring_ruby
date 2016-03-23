@@ -8,6 +8,11 @@
 # planning to introduce a lot of new products into the store very soon, such as
 # software and training seminars.
 
+# Note from Toni: To simplify your review of this, I did separate out the test
+# file but kept all of the classes togther in one file. Please know that I did
+# this only for ease of review, and that normally I would always have each class
+# in its own separate file.
+
 require "pry"
 
 class BookOrder
@@ -128,7 +133,7 @@ class ConferenceTicketOrder
     # [print ticket]
     # [print shipping label]
 
-    @status = "shipped"
+    update_status_to_shipped
   end
 
   def to_s(report_format)
@@ -145,6 +150,10 @@ class ConferenceTicketOrder
 
   def update_status_to_charged
     @status = "charged"
+  end
+
+  def update_status_to_shipped
+    @status = "shipped"
   end
 
   def price_of_ticket
