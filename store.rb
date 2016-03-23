@@ -13,10 +13,8 @@
 # this only for ease of review, and that normally I would always have each class
 # in its own separate file.
 
-require "pry"
-
 class BookOrder
-  attr_reader :quantity, :status, :order_number
+  attr_reader :quantity, :status, :order_number, :order_type
 
   def initialize(order_number, quantity, address)
     @order_number = order_number
@@ -50,7 +48,7 @@ class BookOrder
   end
 
   def shipping_cost(order_type)
-    order_type == "ebook" ? 0 : 4.95
+    order_type == "ebook" ? 0 : cost_to_ship_physical_book
   end
 
   private
@@ -63,8 +61,12 @@ class BookOrder
     14.95
   end
 
+  def cost_to_ship_physical_book
+    4.95
+  end
+
   def total
-    shipping_cost(@order_type) + (quantity * price_of_book)
+    shipping_cost(order_type) + (quantity * price_of_book)
   end
 end
 

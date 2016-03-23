@@ -108,7 +108,7 @@ end
 describe Payment do
   context "a valid payment type" do
     subject do
-      Payment.new(:paypal)
+      Payment.new(:stripe)
     end
 
     it "processes a payment" do
