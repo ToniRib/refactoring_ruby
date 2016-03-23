@@ -110,6 +110,7 @@ class ConferenceTicketOrder
 
   def initialize(order_number, quantity, address)
     fail quantity_error_message if more_than_one_ticket_requested(quantity)
+
     @order_number = order_number
     @quantity = quantity
     @address = address
@@ -151,7 +152,7 @@ class ConferenceTicketOrder
     report += "------|---------------------------------|------\n"
     report += "#{@quantity}     |"
     report += " Conference Ticket               |"
-    report += " $#{shipping + (quantity * 300.0)}"
+    report += " $#{total_with_two_decimals(shipping)}"
     report
     return report
   end
@@ -182,5 +183,9 @@ class ConferenceTicketOrder
 
   def more_than_one_ticket_requested(quantity)
     quantity != 1
+  end
+
+  def total_with_two_decimals(shipping)
+    '%.2f' % (shipping + (quantity * 300.0))
   end
 end
