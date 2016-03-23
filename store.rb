@@ -132,16 +132,14 @@ class ConferenceTicketOrder
   end
 
   def to_s
-    report = "Order ##{@order_number}\n"
-    report += "Ship to: #{@address.join(", ")}\n"
-    report += "-----\n\n"
-    report += "Qty   | Item Name                       | Total\n"
-    report += "------|---------------------------------|------\n"
-    report += "#{@quantity}     |"
-    report += " Conference Ticket               |"
-    report += " $#{total_with_two_decimals}"
-    report
-    return report
+    "Order ##{@order_number}\n" \
+    "Ship to: #{mailing_address}\n" \
+    "-----\n\n" \
+    "Qty   | Item Name                       | Total\n" \
+    "------|---------------------------------|------\n" \
+    "#{@quantity}     |" \
+    " Conference Ticket               |" \
+    " $#{total_with_two_decimals}"
   end
 
   def shipping_cost
@@ -149,6 +147,10 @@ class ConferenceTicketOrder
   end
 
   private
+
+  def mailing_address
+    @address.join(", ")
+  end
 
   def update_status_to_charged
     @status = "charged"
