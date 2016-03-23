@@ -94,7 +94,7 @@ describe ConferenceTicketOrder do
                "------|---------------------------------|------\n" \
                "1     | Conference Ticket               | $300.00"
 
-      expect(order.to_s).to eq(report)
+      expect(order.to_s(:string)).to eq(report)
     end
   end
 

@@ -108,7 +108,7 @@ class BookOrder
 end
 
 class ConferenceTicketOrder
-  attr_reader :quantity, :status
+  attr_reader :quantity, :status, :order_number
 
   def initialize(order_number, quantity, address)
     fail quantity_error_message if more_than_one_ticket_requested(quantity)
@@ -131,15 +131,10 @@ class ConferenceTicketOrder
     @status = "shipped"
   end
 
-  def to_s
-    "Order ##{@order_number}\n" \
-    "Ship to: #{mailing_address}\n" \
-    "-----\n\n" \
-    "Qty   | Item Name                       | Total\n" \
-    "------|---------------------------------|------\n" \
-    "#{@quantity}     |" \
-    " Conference Ticket               |" \
-    " $#{total_with_two_decimals}"
+  def to_s(report_format)
+    report = OrderReport.new(@address, quantity, total, order_number)
+
+    return report.generate_as(report_format)
   end
 
   def shipping_cost
@@ -147,10 +142,6 @@ class ConferenceTicketOrder
   end
 
   private
-
-  def mailing_address
-    @address.join(", ")
-  end
 
   def update_status_to_charged
     @status = "charged"
@@ -166,10 +157,6 @@ class ConferenceTicketOrder
 
   def more_than_one_ticket_requested(quantity)
     quantity != 1
-  end
-
-  def total_with_two_decimals
-    "%.2f" % total
   end
 
   def total
@@ -211,5 +198,44 @@ class Payment
   def send_email_receipt
     # [send email receipt] Toni - I assume this would do something in real life
     true
+  end
+end
+
+class OrderReport
+  attr_reader :address, :quantity, :total, :order_number
+
+  def initialize(address, quantity, total, order_number)
+    @address = address
+    @quantity = quantity
+    @total = total
+    @order_number = order_number
+  end
+
+  def generate_as(format)
+    case format
+    when :string
+      report_as_string
+    end
+  end
+
+  private
+
+  def report_as_string
+    "Order ##{order_number}\n" \
+    "Ship to: #{mailing_address}\n" \
+    "-----\n\n" \
+    "Qty   | Item Name                       | Total\n" \
+    "------|---------------------------------|------\n" \
+    "#{quantity}     |" \
+    " Conference Ticket               |" \
+    " $#{total_with_two_decimals}"
+  end
+
+  def mailing_address
+    address.join(", ")
+  end
+
+  def total_with_two_decimals
+    "%.2f" % total
   end
 end
