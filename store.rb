@@ -10,11 +10,40 @@
 
 # Note from Toni: To simplify your review of this, I did separate out the test
 # file but kept all of the classes togther in one file. Please know that I did
-# this only for ease of review, and that normally I would always have each class
-# in its own separate file.
+# this only for ease of review, and that normally I would always have each class in its own separate file. Also I was only allowed 5 files to upload.
 
-class BookOrder
-  attr_reader :quantity, :status, :order_number, :order_type
+class Book
+  def self.price
+    14.95
+  end
+
+  def self.shipping
+    4.95
+  end
+end
+
+class EBook
+  def self.price
+    14.95
+  end
+
+  def self.shipping
+    0
+  end
+end
+
+class ConferenceTicket
+  def self.price
+    300.0
+  end
+
+  def self.shipping
+    0
+  end
+end
+
+class Order
+  attr_reader :quantity, :status, :order_number, :order_type, :item
 
   def initialize(order_number, quantity, address)
     @order_number = order_number
@@ -23,12 +52,20 @@ class BookOrder
   end
 
   def charge(order_type, payment_type)
-    @order_type = order_type
+    @item ||= ItemsForSale.find(order_type)
 
     payment = Payment.new(payment_type)
     payment.process(total)
 
     @status = payment.status
+  end
+
+  def to_s(order_type)
+    @item ||= ItemsForSale.find(order_type)
+
+    report = OrderReport.new(@address, quantity, total, order_number, order_type)
+
+    report.generate_as(:string)
   end
 
   def ship(order_type)
@@ -41,14 +78,9 @@ class BookOrder
     update_status_to_shipped
   end
 
-  def to_s(order_type)
-    report = OrderReport.new(@address, quantity, total, order_number, order_type)
-
-    report.generate_as(:string)
-  end
-
   def shipping_cost(order_type)
-    order_type == "ebook" ? 0 : cost_to_ship_physical_book
+    @item ||= ItemsForSale.find(order_type)
+    item.shipping
   end
 
   private
@@ -57,67 +89,54 @@ class BookOrder
     @status = "shipped"
   end
 
-  def price_of_book
-    14.95
-  end
-
-  def cost_to_ship_physical_book
-    4.95
-  end
-
   def total
-    shipping_cost(order_type) + (quantity * price_of_book)
+    item.shipping + (quantity * item.price)
   end
 end
 
-class ConferenceTicketOrder
+class ItemsForSale
+  ITEMS = {
+    'print' => Book,
+    'ebook' => EBook,
+    'conference ticket' => ConferenceTicket
+  }
+
+  def self.find(type)
+    ITEMS[type]
+  end
+end
+
+class BookOrder < Order
+end
+
+class ConferenceTicketOrder < Order
   attr_reader :quantity, :status, :order_number
 
   def initialize(order_number, quantity, address)
     fail quantity_error_message if more_than_one_ticket_requested(quantity)
-
-    @order_number = order_number
-    @quantity = quantity
-    @address = address
+    super
   end
 
   def charge(payment_type)
-    payment = Payment.new(payment_type)
-    payment.process(total)
-
-    @status = payment.status
+    super("conference ticket", payment_type)
   end
 
   def ship
     # [print ticket]
     # [print shipping label]
 
-    update_status_to_shipped
+    super("conference ticket")
   end
 
   def to_s
-    report = OrderReport.new(@address,
-                             quantity,
-                             total,
-                             order_number,
-                             "conference ticket")
-
-    report.generate_as(:string)
+    super("conference ticket")
   end
 
   def shipping_cost
-    0
+    super("conference ticket")
   end
 
   private
-
-  def update_status_to_shipped
-    @status = "shipped"
-  end
-
-  def price_of_ticket
-    300.0
-  end
 
   def quantity_error_message
     "Conference tickets are limited to one per customer"
@@ -125,10 +144,6 @@ class ConferenceTicketOrder
 
   def more_than_one_ticket_requested(quantity)
     quantity != 1
-  end
-
-  def total
-    shipping_cost + (quantity * price_of_ticket)
   end
 end
 

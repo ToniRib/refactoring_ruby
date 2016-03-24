@@ -137,3 +137,51 @@ describe OrderReport do
     end
   end
 end
+
+describe ItemsForSale do
+  context "three items exist" do
+    subject { ItemsForSale }
+
+    it "finds the class of an item given an order type" do
+      expect(subject.find("print")).to eq(Book)
+      expect(subject.find("ebook")).to eq(EBook)
+      expect(subject.find("conference ticket")).to eq(ConferenceTicket)
+    end
+  end
+end
+
+describe Book do
+  subject { Book }
+
+  it "has a price" do
+    expect(subject.price).to eq(14.95)
+  end
+
+  it "has a shipping cost" do
+    expect(subject.shipping).to eq(4.95)
+  end
+end
+
+describe EBook do
+  subject { EBook }
+
+  it "has a price" do
+    expect(subject.price).to eq(14.95)
+  end
+
+  it "has a shipping cost" do
+    expect(subject.shipping).to eq(0)
+  end
+end
+
+describe ConferenceTicket do
+  subject { ConferenceTicket }
+
+  it "has a price" do
+    expect(subject.price).to eq(300.0)
+  end
+
+  it "has a shipping cost" do
+    expect(subject.shipping).to eq(0)
+  end
+end
