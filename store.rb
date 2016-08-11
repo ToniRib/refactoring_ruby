@@ -10,7 +10,8 @@
 
 # Note from Toni: To simplify your review of this, I did separate out the test
 # file but kept all of the classes togther in one file. Please know that I did
-# this only for ease of review, and that normally I would always have each class in its own separate file. Also I was only allowed 5 files to upload.
+# this only for ease of review, and that normally I would always have each class
+# in its own separate file. Also I was only allowed 5 files to upload.
 
 class Book
   def self.price
